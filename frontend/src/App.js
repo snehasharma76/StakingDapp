@@ -13,13 +13,10 @@ import StakingToken from './contracts/StakingToken.json'
 import './styles/globals.css'
 
 function App() {
-  // State variables
+  // State variables for wallet connection and contract interaction
   const [stakeAmount, setStakeAmount] = useState(0)
   const [stakedAmount, setStakedAmount] = useState(0)
   const [rewards, setRewards] = useState(0)
-  const [isStaking, setIsStaking] = useState(false)
-  const [provider, setProvider] = useState(null)
-  const [signer, setSigner] = useState(null)
   const [account, setAccount] = useState('')
   const [stakingContract, setStakingContract] = useState(null)
   const [tokenContract, setTokenContract] = useState(null)
@@ -41,8 +38,6 @@ function App() {
       const signer = provider.getSigner()
       const account = await signer.getAddress()
 
-      setProvider(provider)
-      setSigner(signer)
       setAccount(account)
 
       // Initialize contracts
@@ -126,7 +121,6 @@ function App() {
       const tx = await stakingContract.stake(ethers.utils.parseEther(stakeAmount.toString()))
       await tx.wait()
       setStakeAmount(0)
-      setIsStaking(true)
       await updateStakeInfo(stakingContract, account)
       await updateTokenBalance(tokenContract, account)
     } catch (error) {
@@ -142,7 +136,6 @@ function App() {
       setLoading(true)
       const tx = await stakingContract.withdraw(ethers.utils.parseEther(stakedAmount.toString()))
       await tx.wait()
-      setIsStaking(false)
       await updateStakeInfo(stakingContract, account)
       await updateTokenBalance(tokenContract, account)
     } catch (error) {
