@@ -1,6 +1,6 @@
 # Solidity Staking Platform
 
-A decentralized staking platform built with Solidity, Hardhat, and React.
+A decentralized staking platform built with Solidity, Hardhat, and React. This was made as part of a technical article series for Metaschool.
 
 ## Features
 
