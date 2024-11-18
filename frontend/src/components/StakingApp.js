@@ -3,17 +3,15 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
-import { Button } from "./components/ui/button"
-import { Input } from "./components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card"
-import { Slider } from "./components/ui/slider"
-import { CoinsIcon, Rocket, Sparkles, Wallet } from 'lucide-react'
-import StakingPlatform from './contracts/StakingPlatform.json'
-import StakingToken from './contracts/StakingToken.json'
-import './styles/globals.css'
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Slider } from "./ui/slider"
+import { CoinsIcon as CoinIcon, Rocket, Sparkles, Wallet } from 'lucide-react'
+import StakingPlatform from '../contracts/StakingPlatform.json'
+import StakingToken from '../contracts/StakingToken.json'
 
-function App() {
-  // State variables
+export default function StakingApp() {
   const [stakeAmount, setStakeAmount] = useState(0)
   const [stakedAmount, setStakedAmount] = useState(0)
   const [rewards, setRewards] = useState(0)
@@ -27,7 +25,6 @@ function App() {
   const [isApproved, setIsApproved] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Connect wallet function
   const connectWallet = async () => {
     try {
       setLoading(true)
@@ -71,7 +68,6 @@ function App() {
     }
   }
 
-  // Update stake info
   const updateStakeInfo = async (contract, account) => {
     try {
       const info = await contract.getStakeInfo(account)
@@ -82,7 +78,6 @@ function App() {
     }
   }
 
-  // Update token balance
   const updateTokenBalance = async (contract, account) => {
     try {
       const balance = await contract.balanceOf(account)
@@ -92,7 +87,6 @@ function App() {
     }
   }
 
-  // Check allowance
   const checkAllowance = async (contract, owner, spender) => {
     try {
       const allowance = await contract.allowance(owner, spender)
@@ -102,7 +96,6 @@ function App() {
     }
   }
 
-  // Handle token approval
   const handleApprove = async () => {
     try {
       setLoading(true)
@@ -119,7 +112,6 @@ function App() {
     }
   }
 
-  // Handle staking
   const handleStake = async () => {
     try {
       setLoading(true)
@@ -136,7 +128,6 @@ function App() {
     }
   }
 
-  // Handle withdrawal
   const handleWithdraw = async () => {
     try {
       setLoading(true)
@@ -152,7 +143,6 @@ function App() {
     }
   }
 
-  // Auto-update effect
   useEffect(() => {
     if (stakingContract && account) {
       const interval = setInterval(() => {
@@ -235,22 +225,6 @@ function App() {
                       Max
                     </Button>
                   </div>
-                  
-                  <div className="space-y-2 pt-2">
-                    <label className="text-sm font-medium text-gray-700">Quick Stake Slider</label>
-                    <Slider
-                      max={Number(tokenBalance)}
-                      step={0.1}
-                      value={[stakeAmount]}
-                      onValueChange={(value) => setStakeAmount(value[0])}
-                      className="py-4"
-                      disabled={loading}
-                    />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>0 COSMIC</span>
-                      <span>{Number(tokenBalance).toFixed(2)} COSMIC</span>
-                    </div>
-                  </div>
                 </div>
 
                 {!isApproved ? (
@@ -266,7 +240,7 @@ function App() {
                       </div>
                     ) : (
                       <>
-                        <CoinsIcon className="mr-2 h-4 w-4" />
+                        <CoinIcon className="mr-2 h-4 w-4" />
                         Approve COSMIC Token
                       </>
                     )}
@@ -297,7 +271,7 @@ function App() {
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
                       ) : (
                         <>
-                          <CoinsIcon className="mr-2 h-4 w-4" />
+                          <CoinIcon className="mr-2 h-4 w-4" />
                           Withdraw
                         </>
                       )}
@@ -321,5 +295,3 @@ function App() {
     </div>
   )
 }
-
-export default App
