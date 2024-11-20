@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
@@ -160,7 +161,7 @@ export default function StakingApp() {
           <div className="flex items-center justify-center space-x-2">
             <Sparkles className="h-8 w-8 text-purple-500" />
             <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-600">
-              Cosmic Staking
+              Staking Token Platform
             </CardTitle>
           </div>
           <CardDescription className="text-center text-purple-600 text-lg">
@@ -193,13 +194,13 @@ export default function StakingApp() {
                 <div className="bg-purple-50 rounded-lg p-4 text-center">
                   <div className="text-sm text-purple-600 mb-1">Balance</div>
                   <div className="font-bold text-lg text-purple-800">
-                    {Number(tokenBalance).toFixed(2)} COSMIC
+                    {Number(tokenBalance).toFixed(2)} STK
                   </div>
                 </div>
                 <div className="bg-indigo-50 rounded-lg p-4 text-center">
                   <div className="text-sm text-indigo-600 mb-1">Staked</div>
                   <div className="font-bold text-lg text-indigo-800">
-                    {Number(stakedAmount).toFixed(2)} COSMIC
+                    {Number(stakedAmount).toFixed(2)} STK
                   </div>
                 </div>
               </div>
@@ -241,7 +242,7 @@ export default function StakingApp() {
                     ) : (
                       <>
                         <CoinIcon className="mr-2 h-4 w-4" />
-                        Approve COSMIC Token
+                        Approve STK Token
                       </>
                     )}
                   </Button>
@@ -284,7 +285,7 @@ export default function StakingApp() {
                 <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-4">
                   <div className="text-sm text-purple-600 mb-2">Pending Rewards</div>
                   <div className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600">
-                    {Number(rewards).toFixed(4)} COSMIC
+                    {Number(rewards).toFixed(4)} STK
                   </div>
                 </div>
               )}

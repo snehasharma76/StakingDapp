@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
-import { Button } from "./components/ui/button"
-import { Input } from "./components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card"
-import { Slider } from "./components/ui/slider"
-import { CoinsIcon, Rocket, Sparkles, Wallet } from 'lucide-react'
+import { Wallet2 } from 'lucide-react'
 import StakingPlatform from './contracts/StakingPlatform.json'
 import StakingToken from './contracts/StakingToken.json'
+import SnowAnimation from './components/ui/SnowAnimation'
+import ChristmasScene from './components/ui/ChristmasScene'
 import './styles/globals.css'
+import './styles/snowflake.css'
 
 function App() {
   // State variables for wallet connection and contract interaction
@@ -156,161 +155,130 @@ function App() {
     }
   }, [stakingContract, tokenContract, account])
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-700 flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-white/20">
-        <CardHeader className="space-y-2">
-          <div className="flex items-center justify-center space-x-2">
-            <Sparkles className="h-8 w-8 text-purple-500" />
-            <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-600">
-              Cosmic Staking
-            </CardTitle>
-          </div>
-          <CardDescription className="text-center text-purple-600 text-lg">
-            Stake your tokens and reach for the stars!
-          </CardDescription>
-        </CardHeader>
+  const shortenAddress = (address) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  }
 
-        <CardContent className="space-y-6">
-          {!account ? (
-            <Button 
-              onClick={connectWallet} 
-              className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg text-lg py-6"
+  const formatBalance = (balance) => {
+    return Number(balance).toFixed(2);
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#1a0f1f] via-[#3c1f3b] to-[#C41E3A] flex items-center justify-center p-4">
+      <ChristmasScene />
+      <div className="w-full max-w-xl">
+        {/* Connect Wallet Card */}
+        <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/10 mb-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-christmas-red animate-pulse"></div>
+              <h2 className="text-lg font-semibold text-white">Wallet Connection</h2>
+            </div>
+            <button
+              onClick={connectWallet}
               disabled={loading}
+              className="px-4 py-2 bg-black/20 hover:bg-black/30 text-white rounded-xl transition-all border border-white/20"
             >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Connecting...</span>
-                </div>
-              ) : (
-                <>
-                  <Wallet className="mr-2 h-5 w-5" />
-                  Connect Wallet
-                </>
-              )}
-            </Button>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-purple-50 rounded-lg p-4 text-center">
-                  <div className="text-sm text-purple-600 mb-1">Balance</div>
-                  <div className="font-bold text-lg text-purple-800">
-                    {Number(tokenBalance).toFixed(2)} COSMIC
-                  </div>
-                </div>
-                <div className="bg-indigo-50 rounded-lg p-4 text-center">
-                  <div className="text-sm text-indigo-600 mb-1">Staked</div>
-                  <div className="font-bold text-lg text-indigo-800">
-                    {Number(stakedAmount).toFixed(2)} COSMIC
-                  </div>
-                </div>
+              {account ? shortenAddress(account) : "Connect Wallet"}
+            </button>
+          </div>
+        </div>
+
+        {/* Staking Card */}
+        <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/10">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+            <span className="text-2xl">🎅</span> Stake Your Tokens
+          </h2>
+          
+          <div className="space-y-4">
+            {/* Balance Display */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-black/20 rounded-xl p-3">
+                <div className="text-sm text-white/60 mb-1">Token Balance</div>
+                <div className="text-lg font-semibold text-white">{formatBalance(tokenBalance)} STK</div>
+              </div>
+              <div className="bg-black/20 rounded-xl p-3">
+                <div className="text-sm text-white/60 mb-1">Staked Amount</div>
+                <div className="text-lg font-semibold text-white">{formatBalance(stakedAmount)} STK</div>
+              </div>
+            </div>
+
+            {/* Staking Input */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-white/80 font-medium">Amount to Stake</label>
+                <button
+                  onClick={() => setStakeAmount(tokenBalance)}
+                  className="text-sm px-2 py-1 bg-black/20 hover:bg-black/30 text-white rounded-lg transition-all border border-white/20"
+                >
+                  MAX
+                </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Stake Amount</label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="number"
-                      placeholder="Enter amount to stake"
-                      value={stakeAmount}
-                      onChange={(e) => setStakeAmount(Number(e.target.value))}
-                      className="flex-grow"
-                      disabled={loading}
-                    />
-                    <Button
-                      onClick={() => setStakeAmount(Number(tokenBalance))}
-                      variant="outline"
-                      className="whitespace-nowrap"
-                      disabled={loading}
+              <input
+                type="number"
+                value={stakeAmount}
+                onChange={(e) => setStakeAmount(e.target.value)}
+                className="w-full bg-black/20 border border-white/20 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                placeholder="Enter amount"
+              />
+              
+              {/* Enhanced Slider */}
+              <div className="relative py-2">
+                <div className="relative h-6">
+                  <div className="absolute top-1/2 -translate-y-1/2 w-full h-5 bg-black/20 rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] overflow-hidden">
+                    <div 
+                      className="absolute h-full bg-gradient-to-r from-christmas-red to-christmas-green rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${(stakeAmount / tokenBalance) * 100}%` }}
                     >
-                      Max
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2 pt-2">
-                    <label className="text-sm font-medium text-gray-700">Quick Stake Slider</label>
-                    <Slider
-                      max={Number(tokenBalance)}
-                      step={0.1}
-                      value={[stakeAmount]}
-                      onValueChange={(value) => setStakeAmount(value[0])}
-                      className="py-4"
-                      disabled={loading}
-                    />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>0 COSMIC</span>
-                      <span>{Number(tokenBalance).toFixed(2)} COSMIC</span>
+                      <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.2)_20%,rgba(255,255,255,0)_40%)] animate-shine"></div>
                     </div>
                   </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={tokenBalance}
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    className="absolute top-1/2 -translate-y-1/2 w-full h-5 appearance-none bg-transparent cursor-pointer
+                      [&::-webkit-slider-thumb]:appearance-none 
+                      [&::-webkit-slider-thumb]:w-7 
+                      [&::-webkit-slider-thumb]:h-7
+                      [&::-webkit-slider-thumb]:rounded-full 
+                      [&::-webkit-slider-thumb]:bg-white
+                      [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(0,0,0,0.2)] 
+                      [&::-webkit-slider-thumb]:cursor-pointer 
+                      [&::-webkit-slider-thumb]:border-2
+                      [&::-webkit-slider-thumb]:border-christmas-red 
+                      hover:[&::-webkit-slider-thumb]:border-christmas-green
+                      [&::-webkit-slider-thumb]:transition-all
+                      [&::-webkit-slider-thumb]:duration-300"
+                  />
                 </div>
-
-                {!isApproved ? (
-                  <Button 
-                    onClick={handleApprove} 
-                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Approving...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <CoinsIcon className="mr-2 h-4 w-4" />
-                        Approve COSMIC Token
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button 
-                      onClick={handleStake} 
-                      className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
-                      disabled={loading || stakeAmount <= 0}
-                    >
-                      {loading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      ) : (
-                        <>
-                          <Rocket className="mr-2 h-4 w-4" />
-                          Stake
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      onClick={handleWithdraw}
-                      variant="outline"
-                      className="border-2"
-                      disabled={loading || stakedAmount <= 0}
-                    >
-                      {loading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                      ) : (
-                        <>
-                          <CoinsIcon className="mr-2 h-4 w-4" />
-                          Withdraw
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
               </div>
+            </div>
 
-              {stakedAmount > 0 && (
-                <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-4">
-                  <div className="text-sm text-purple-600 mb-2">Pending Rewards</div>
-                  <div className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600">
-                    {Number(rewards).toFixed(4)} COSMIC
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleStake}
+                disabled={!account || loading}
+                className="flex-1 px-4 py-3 bg-christmas-green hover:bg-christmas-green/90 text-white rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+              >
+                Stake Tokens
+              </button>
+              <button
+                onClick={handleWithdraw}
+                disabled={!account || loading}
+                className="flex-1 px-4 py-3 bg-christmas-red hover:bg-christmas-red/90 text-white rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+              >
+                Unstake
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <SnowAnimation />
     </div>
   )
 }
