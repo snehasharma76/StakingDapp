@@ -1,166 +1,117 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
-import { Wallet2 } from 'lucide-react'
-import StakingPlatform from './contracts/StakingPlatform.json'
-import StakingToken from './contracts/StakingToken.json'
-import SnowAnimation from './components/ui/SnowAnimation'
+import stakingAbi from './artifacts/contracts/StakingPlatform.sol/StakingPlatform.json'
+import tokenAbi from './artifacts/contracts/Token.sol/Token.json'
 import ChristmasScene from './components/ui/ChristmasScene'
-import './styles/globals.css'
-import './styles/snowflake.css'
+import SnowAnimation from './components/ui/SnowAnimation'
 
 function App() {
-  // State variables for wallet connection and contract interaction
-  const [stakeAmount, setStakeAmount] = useState(0)
-  const [stakedAmount, setStakedAmount] = useState(0)
-  const [rewards, setRewards] = useState(0)
   const [account, setAccount] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [provider, setProvider] = useState(null)
+  const [signer, setSigner] = useState(null)
   const [stakingContract, setStakingContract] = useState(null)
   const [tokenContract, setTokenContract] = useState(null)
-  const [tokenBalance, setTokenBalance] = useState('0')
-  const [isApproved, setIsApproved] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [tokenBalance, setTokenBalance] = useState(0)
+  const [stakedBalance, setStakedBalance] = useState(0)
+  const [stakeAmount, setStakeAmount] = useState(0)
 
-  // Connect wallet function
+  const stakingAddress = process.env.REACT_APP_STAKING_CONTRACT_ADDRESS
+  const tokenAddress = process.env.REACT_APP_TOKEN_CONTRACT_ADDRESS
+
+  useEffect(() => {
+    if (account) {
+      setupContracts()
+    }
+  }, [account])
+
+  useEffect(() => {
+    if (stakingContract && tokenContract) {
+      updateBalances()
+    }
+  }, [stakingContract, tokenContract])
+
+  const setupContracts = async () => {
+    if (provider) {
+      const stakingContract = new ethers.Contract(stakingAddress, stakingAbi.abi, signer)
+      const tokenContract = new ethers.Contract(tokenAddress, tokenAbi.abi, signer)
+      
+      setStakingContract(stakingContract)
+      setTokenContract(tokenContract)
+    }
+  }
+
+  const updateBalances = async () => {
+    try {
+      const tokenBal = await tokenContract.balanceOf(account)
+      const stakedBal = await stakingContract.stakedBalance(account)
+      
+      setTokenBalance(ethers.utils.formatEther(tokenBal))
+      setStakedBalance(ethers.utils.formatEther(stakedBal))
+    } catch (error) {
+      console.error("Error updating balances:", error)
+    }
+  }
+
   const connectWallet = async () => {
     try {
-      setLoading(true)
-      const web3Modal = new Web3Modal({
-        cacheProvider: true,
-        providerOptions: {}
-      })
-      
+      const web3Modal = new Web3Modal()
       const connection = await web3Modal.connect()
       const provider = new ethers.providers.Web3Provider(connection)
       const signer = provider.getSigner()
       const account = await signer.getAddress()
 
+      setProvider(provider)
+      setSigner(signer)
       setAccount(account)
-
-      // Initialize contracts
-      const stakingContract = new ethers.Contract(
-        process.env.REACT_APP_STAKING_CONTRACT_ADDRESS,
-        StakingPlatform.abi,
-        signer
-      )
-      const tokenContract = new ethers.Contract(
-        process.env.REACT_APP_TOKEN_CONTRACT_ADDRESS,
-        StakingToken.abi,
-        signer
-      )
-
-      setStakingContract(stakingContract)
-      setTokenContract(tokenContract)
-
-      // Load initial data
-      await updateStakeInfo(stakingContract, account)
-      await updateTokenBalance(tokenContract, account)
-      await checkAllowance(tokenContract, account, process.env.REACT_APP_STAKING_CONTRACT_ADDRESS)
     } catch (error) {
       console.error("Error connecting wallet:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
-  // Update stake info
-  const updateStakeInfo = async (contract, account) => {
-    try {
-      const info = await contract.getStakeInfo(account)
-      setStakedAmount(Number(ethers.utils.formatEther(info.stakedAmount)))
-      setRewards(Number(ethers.utils.formatEther(info.pendingRewards)))
-    } catch (error) {
-      console.error("Error updating stake info:", error)
-    }
-  }
-
-  // Update token balance
-  const updateTokenBalance = async (contract, account) => {
-    try {
-      const balance = await contract.balanceOf(account)
-      setTokenBalance(ethers.utils.formatEther(balance))
-    } catch (error) {
-      console.error("Error updating token balance:", error)
-    }
-  }
-
-  // Check allowance
-  const checkAllowance = async (contract, owner, spender) => {
-    try {
-      const allowance = await contract.allowance(owner, spender)
-      setIsApproved(allowance.gt(ethers.utils.parseEther("100")))
-    } catch (error) {
-      console.error("Error checking allowance:", error)
-    }
-  }
-
-  // Handle token approval
-  const handleApprove = async () => {
-    try {
-      setLoading(true)
-      const tx = await tokenContract.approve(
-        process.env.REACT_APP_STAKING_CONTRACT_ADDRESS,
-        ethers.constants.MaxUint256
-      )
-      await tx.wait()
-      setIsApproved(true)
-    } catch (error) {
-      console.error("Error approving tokens:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle staking
   const handleStake = async () => {
+    if (!stakingContract || !tokenContract) return
+    
     try {
       setLoading(true)
-      const tx = await stakingContract.stake(ethers.utils.parseEther(stakeAmount.toString()))
-      await tx.wait()
-      setStakeAmount(0)
-      await updateStakeInfo(stakingContract, account)
-      await updateTokenBalance(tokenContract, account)
+      const amount = ethers.utils.parseEther(stakeAmount.toString())
+      const approveTx = await tokenContract.approve(stakingAddress, amount)
+      await approveTx.wait()
+      
+      const stakeTx = await stakingContract.stake(amount)
+      await stakeTx.wait()
+      
+      await updateBalances()
     } catch (error) {
-      console.error("Error staking tokens:", error)
+      console.error("Error staking:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle withdrawal
   const handleWithdraw = async () => {
+    if (!stakingContract) return
+    
     try {
       setLoading(true)
-      const tx = await stakingContract.withdraw(ethers.utils.parseEther(stakedAmount.toString()))
-      await tx.wait()
-      await updateStakeInfo(stakingContract, account)
-      await updateTokenBalance(tokenContract, account)
+      const withdrawTx = await stakingContract.withdraw()
+      await withdrawTx.wait()
+      
+      await updateBalances()
     } catch (error) {
-      console.error("Error withdrawing tokens:", error)
+      console.error("Error withdrawing:", error)
     } finally {
       setLoading(false)
     }
   }
-
-  // Auto-update effect
-  useEffect(() => {
-    if (stakingContract && account) {
-      const interval = setInterval(() => {
-        updateStakeInfo(stakingContract, account)
-        updateTokenBalance(tokenContract, account)
-      }, 10000)
-      return () => clearInterval(interval)
-    }
-  }, [stakingContract, tokenContract, account])
 
   const shortenAddress = (address) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
   const formatBalance = (balance) => {
-    return Number(balance).toFixed(2);
+    return Number(balance).toFixed(2)
   }
 
   return (
@@ -199,7 +150,7 @@ function App() {
               </div>
               <div className="bg-black/20 rounded-xl p-3">
                 <div className="text-sm text-white/60 mb-1">Staked Amount</div>
-                <div className="text-lg font-semibold text-white">{formatBalance(stakedAmount)} STK</div>
+                <div className="text-lg font-semibold text-white">{formatBalance(stakedBalance)} STK</div>
               </div>
             </div>
 
