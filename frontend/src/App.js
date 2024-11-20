@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
-import { Wallet2 } from 'lucide-react'
 import StakingPlatform from './contracts/StakingPlatform.json'
 import StakingToken from './contracts/StakingToken.json'
 import SnowAnimation from './components/ui/SnowAnimation'
@@ -16,12 +15,10 @@ function App() {
   // State variables for wallet connection and contract interaction
   const [stakeAmount, setStakeAmount] = useState(0)
   const [stakedAmount, setStakedAmount] = useState(0)
-  const [rewards, setRewards] = useState(0)
   const [account, setAccount] = useState('')
   const [stakingContract, setStakingContract] = useState(null)
   const [tokenContract, setTokenContract] = useState(null)
   const [tokenBalance, setTokenBalance] = useState('0')
-  const [isApproved, setIsApproved] = useState(false)
   const [loading, setLoading] = useState(false)
 
   // Connect wallet function
@@ -58,7 +55,6 @@ function App() {
       // Load initial data
       await updateStakeInfo(stakingContract, account)
       await updateTokenBalance(tokenContract, account)
-      await checkAllowance(tokenContract, account, process.env.REACT_APP_STAKING_CONTRACT_ADDRESS)
     } catch (error) {
       console.error("Error connecting wallet:", error)
     } finally {
@@ -71,7 +67,6 @@ function App() {
     try {
       const info = await contract.getStakeInfo(account)
       setStakedAmount(Number(ethers.utils.formatEther(info.stakedAmount)))
-      setRewards(Number(ethers.utils.formatEther(info.pendingRewards)))
     } catch (error) {
       console.error("Error updating stake info:", error)
     }
@@ -84,33 +79,6 @@ function App() {
       setTokenBalance(ethers.utils.formatEther(balance))
     } catch (error) {
       console.error("Error updating token balance:", error)
-    }
-  }
-
-  // Check allowance
-  const checkAllowance = async (contract, owner, spender) => {
-    try {
-      const allowance = await contract.allowance(owner, spender)
-      setIsApproved(allowance.gt(ethers.utils.parseEther("100")))
-    } catch (error) {
-      console.error("Error checking allowance:", error)
-    }
-  }
-
-  // Handle token approval
-  const handleApprove = async () => {
-    try {
-      setLoading(true)
-      const tx = await tokenContract.approve(
-        process.env.REACT_APP_STAKING_CONTRACT_ADDRESS,
-        ethers.constants.MaxUint256
-      )
-      await tx.wait()
-      setIsApproved(true)
-    } catch (error) {
-      console.error("Error approving tokens:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
