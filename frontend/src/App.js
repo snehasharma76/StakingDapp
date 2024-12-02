@@ -10,6 +10,7 @@ import ChristmasScene from './components/ui/ChristmasScene'
 
 import './styles/globals.css'
 import './styles/snowflake.css'
+import './styles/candycane.css'
 
 function App() {
   // State variables for wallet connection and contract interaction

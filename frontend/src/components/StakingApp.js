@@ -9,8 +9,10 @@ import { Input } from "./ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Slider } from "./ui/slider"
 import { CoinsIcon as CoinIcon, Rocket, Sparkles, Wallet } from 'lucide-react'
+import { CandyCane } from './ui/CandyCane'
 import StakingPlatform from '../contracts/StakingPlatform.json'
 import StakingToken from '../contracts/StakingToken.json'
+import TokenFaucetABI from '../contracts/TokenFaucet.json'
 
 export default function StakingApp() {
   const [stakeAmount, setStakeAmount] = useState(0)
@@ -25,6 +27,7 @@ export default function StakingApp() {
   const [tokenBalance, setTokenBalance] = useState('0')
   const [isApproved, setIsApproved] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [requestingTokens, setRequestingTokens] = useState(false)
 
   const connectWallet = async () => {
     try {
@@ -144,6 +147,25 @@ export default function StakingApp() {
     }
   }
 
+  const requestTokens = async () => {
+    if (!signer) return;
+    try {
+      setRequestingTokens(true);
+      const faucetContract = new ethers.Contract(
+        process.env.REACT_APP_FAUCET_CONTRACT_ADDRESS,
+        TokenFaucetABI.abi,
+        signer
+      );
+      const tx = await faucetContract.requestTokens();
+      await tx.wait();
+      await updateTokenBalance(tokenContract, account);
+    } catch (error) {
+      console.error("Error requesting tokens:", error);
+    } finally {
+      setRequestingTokens(false);
+    }
+  };
+
   useEffect(() => {
     if (stakingContract && account) {
       const interval = setInterval(() => {
@@ -170,26 +192,46 @@ export default function StakingApp() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {!account ? (
-            <Button 
-              onClick={connectWallet} 
-              className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg text-lg py-6"
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Connecting...</span>
-                </div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <span className="text-white">Wallet Connection</span>
+            </div>
+            <div className="flex gap-4 items-center">
+              {!account ? (
+                <Button
+                  onClick={connectWallet}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-green-600 hover:from-red-600 hover:to-green-700 text-white"
+                >
+                  <Wallet className="w-4 h-4" />
+                  <span>Connect Wallet</span>
+                </Button>
               ) : (
-                <>
-                  <Wallet className="mr-2 h-5 w-5" />
-                  Connect Wallet
-                </>
+                <div className="flex gap-4 items-center">
+                  <Button
+                    onClick={requestTokens}
+                    className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white"
+                    disabled={loading || requestingTokens}
+                  >
+                    <CandyCane className="w-5 h-5" />
+                    <span>{requestingTokens ? "Requesting..." : "Free Tokens"}</span>
+                  </Button>
+                  <div className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-800">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-white">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                  </div>
+                </div>
               )}
-            </Button>
-          ) : (
-            <>
+            </div>
+          </div>
+
+          {account && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <span className="text-2xl">🎅</span>
+                <span className="text-white text-xl">Stake Your Tokens</span>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-purple-50 rounded-lg p-4 text-center">
                   <div className="text-sm text-purple-600 mb-1">Balance</div>
@@ -207,89 +249,45 @@ export default function StakingApp() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Stake Amount</label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="number"
-                      placeholder="Enter amount to stake"
-                      value={stakeAmount}
-                      onChange={(e) => setStakeAmount(Number(e.target.value))}
-                      className="flex-grow"
-                      disabled={loading}
-                    />
-                    <Button
-                      onClick={() => setStakeAmount(Number(tokenBalance))}
-                      variant="outline"
-                      className="whitespace-nowrap"
-                      disabled={loading}
-                    >
-                      Max
-                    </Button>
-                  </div>
+                  <label className="text-sm text-purple-600">Amount to Stake</label>
+                  <Input
+                    type="number"
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    placeholder="Enter amount to stake"
+                    className="w-full"
+                  />
                 </div>
 
                 {!isApproved ? (
-                  <Button 
-                    onClick={handleApprove} 
-                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
+                  <Button
+                    onClick={handleApprove}
                     disabled={loading}
+                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
                   >
-                    {loading ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Approving...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <CoinIcon className="mr-2 h-4 w-4" />
-                        Approve STK Token
-                      </>
-                    )}
+                    {loading ? "Approving..." : "Approve Tokens"}
                   </Button>
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
-                    <Button 
-                      onClick={handleStake} 
-                      className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
+                    <Button
+                      onClick={handleStake}
                       disabled={loading || stakeAmount <= 0}
+                      className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
                     >
-                      {loading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      ) : (
-                        <>
-                          <Rocket className="mr-2 h-4 w-4" />
-                          Stake
-                        </>
-                      )}
+                      {loading ? "Staking..." : "Stake Tokens"}
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleWithdraw}
-                      variant="outline"
-                      className="border-2"
                       disabled={loading || stakedAmount <= 0}
+                      variant="outline"
+                      className="w-full border-2"
                     >
-                      {loading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                      ) : (
-                        <>
-                          <CoinIcon className="mr-2 h-4 w-4" />
-                          Withdraw
-                        </>
-                      )}
+                      {loading ? "Withdrawing..." : "Withdraw"}
                     </Button>
                   </div>
                 )}
               </div>
-
-              {stakedAmount > 0 && (
-                <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-4">
-                  <div className="text-sm text-purple-600 mb-2">Pending Rewards</div>
-                  <div className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600">
-                    {Number(rewards).toFixed(4)} STK
-                  </div>
-                </div>
-              )}
-            </>
+            </div>
           )}
         </CardContent>
       </Card>

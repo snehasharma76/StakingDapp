@@ -1,0 +1,48 @@
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.1) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 0, 0, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+.candy-cane-icon {
+  width: 24px !important;
+  height: 24px !important;
+  transition: transform 0.3s ease;
+  stroke: #ffffff;
+  fill: none;
+}
+
+.candy-cane-icon:hover {
+  transform: scale(1.1);
+}
+
+.candy-stripe {
+  animation: candyStripe 2s linear infinite;
+  stroke: #ff0000;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes candyStripe {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 10;
+  }
+}
